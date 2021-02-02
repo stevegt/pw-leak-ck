@@ -15,7 +15,7 @@ By default, passwords aren't echoed to the screen as you enter them, so a sessio
 
 ```
 $ pw-leak-ck 
-enter passwords, one per line:
+enter passwords, one per line (^C to quit):
 > no known leaks
 > no known leaks
 > leaked 2897638 times
@@ -27,7 +27,7 @@ and need to remember which passwords need changing:
 
 ```
 $ pw-leak-ck -m
-enter passwords, one per line:
+enter passwords, one per line (^C to quit):
 > a*****z no known leaks
 > a*******z no known leaks
 > a****3 leaked 2897638 times
