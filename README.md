@@ -14,6 +14,7 @@ paranoid approach):
 By default, passwords aren't echoed to the screen as you enter them, so a session looks like this:
 
 ```
+$ pw-leak-ck 
 enter passwords, one per line:
 > no known leaks
 > no known leaks
@@ -26,7 +27,7 @@ version of each password -- this helps when you're checking several
 and need to remember which passwords need changing: 
 
 ```
-./pw-leak-ck -m
+$ pw-leak-ck -m
 enter passwords, one per line:
 > a*****7 no known leaks
 > l*******f no known leaks
