@@ -16,13 +16,14 @@ import (
 var version string
 
 func main() {
+	showMasked := gotFlag("-m")
 	fmt.Println("enter passwords, one per line:")
 	for {
-		ck()
+		ck(showMasked)
 	}
 }
 
-func ck() {
+func ck(showMasked bool) {
 	fmt.Print("> ")
 	buf, err := terminal.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
@@ -32,7 +33,12 @@ func ck() {
 		fmt.Println()
 		return
 	}
-	masked := string(buf[0:1]) + strings.Repeat("*", len(buf)-2) + string(buf[len(buf)-1:])
+	var masked string
+	if showMasked {
+		masked = string(buf[0:1]) + strings.Repeat("*", len(buf)-2) + string(buf[len(buf)-1:])
+	} else {
+		masked = ""
+	}
 
 	bin := sha1.Sum(buf)
 	hex := strings.ToUpper(fmt.Sprintf("%X", bin))
@@ -71,4 +77,16 @@ func ck() {
 		log.Fatal(err)
 	}
 	return
+}
+
+func gotFlag(flag string) bool {
+	if len(os.Args) < 2 {
+		return false
+	}
+	for _, arg := range os.Args[1:] {
+		if flag == arg {
+			return true
+		}
+	}
+	return false
 }
