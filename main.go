@@ -38,22 +38,22 @@ func main() {
 	for {
 		// read password from terminal
 		fmt.Print("> ")
-		buf, err := terminal.ReadPassword(term)
+		pw, err := terminal.ReadPassword(term)
 		if err != nil {
 			log.Fatal(err)
 		}
-		if len(buf) == 0 {
+		if len(pw) == 0 {
 			fmt.Println()
 			continue
 		}
 
 		// get leak count
-		leaks := ck(buf)
+		leaks := ck(pw)
 
 		// show results
 		var masked string
-		if showMasked && len(buf) > 1 {
-			masked = string(buf[0:1]) + strings.Repeat("*", len(buf)-2) + string(buf[len(buf)-1:])
+		if showMasked && len(pw) > 1 {
+			masked = string(pw[0:1]) + strings.Repeat("*", len(pw)-2) + string(pw[len(pw)-1:])
 		} else {
 			masked = ""
 		}
@@ -67,9 +67,9 @@ func main() {
 	return
 }
 
-func ck(buf []byte) (leaks int) {
+func ck(pw []byte) (leaks int) {
 	// generate hash
-	bin := sha1.Sum(buf)
+	bin := sha1.Sum(pw)
 	hex := strings.ToUpper(fmt.Sprintf("%X", bin))
 	first5 := hex[:5]
 
