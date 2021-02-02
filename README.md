@@ -9,7 +9,7 @@ To install the `pw-leak-ck` binary in your path (assuming you trust
 the `go get` machinery -- use the `git clone` method below for a more
 paranoid approach):
 
-`go get -v github.com/stevegt/pw-leak-ck`
+`go get -u -v github.com/stevegt/pw-leak-ck`
 
 By default, passwords aren't echoed to the screen as you enter them, so a session looks like this:
 
@@ -18,7 +18,6 @@ $ pw-leak-ck
 enter passwords, one per line:
 > no known leaks
 > no known leaks
-> leaked 5 times
 > leaked 2897638 times
 ```
 
@@ -29,9 +28,8 @@ and need to remember which passwords need changing:
 ```
 $ pw-leak-ck -m
 enter passwords, one per line:
-> a*****7 no known leaks
-> l*******f no known leaks
-> (*******t leaked 5 times
+> a*****z no known leaks
+> a*******z no known leaks
 > a****3 leaked 2897638 times
 ```
 
