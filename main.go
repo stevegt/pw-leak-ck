@@ -7,8 +7,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -17,35 +19,62 @@ var version string
 
 func main() {
 	showMasked := gotFlag("-m")
-	fmt.Println("enter passwords, one per line:")
-	for {
-		ck(showMasked)
-	}
-}
 
-func ck(showMasked bool) {
-	fmt.Print("> ")
-	buf, err := terminal.ReadPassword(int(os.Stdin.Fd()))
+	// handle ^C
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	term := int(os.Stdin.Fd())
+	termState, err := terminal.GetState(term)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if len(buf) == 0 {
-		fmt.Println()
-		return
-	}
-	var masked string
-	if showMasked {
-		masked = string(buf[0:1]) + strings.Repeat("*", len(buf)-2) + string(buf[len(buf)-1:])
-	} else {
-		masked = ""
+	go func() {
+		<-sigs
+		terminal.Restore(term, termState)
+		os.Exit(0)
+	}()
+
+	fmt.Println("enter passwords, one per line (^C to quit):")
+	for {
+		// read password from terminal
+		fmt.Print("> ")
+		buf, err := terminal.ReadPassword(term)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if len(buf) == 0 {
+			fmt.Println()
+			continue
+		}
+
+		// get leak count
+		leaks := ck(buf)
+
+		// show results
+		var masked string
+		if showMasked && len(buf) > 1 {
+			masked = string(buf[0:1]) + strings.Repeat("*", len(buf)-2) + string(buf[len(buf)-1:])
+		} else {
+			masked = ""
+		}
+		if leaks > 0 {
+			fmt.Printf("%s leaked %d times\n", masked, leaks)
+		} else {
+			fmt.Printf("%s no known leaks\n", masked)
+		}
 	}
 
+	return
+}
+
+func ck(buf []byte) (leaks int) {
+	// generate hash
 	bin := sha1.Sum(buf)
 	hex := strings.ToUpper(fmt.Sprintf("%X", bin))
 	first5 := hex[:5]
 
+	// send first 5 bytes to server
 	url := fmt.Sprintf("https://api.pwnedpasswords.com/range/%s", first5)
-
 	var client = &http.Client{}
 	res, err := client.Get(url)
 	if err != nil {
@@ -53,7 +82,7 @@ func ck(showMasked bool) {
 	}
 	defer res.Body.Close()
 
-	leaks := 0
+	// search response for a line that matches full hash
 	scanner := bufio.NewScanner(res.Body)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -67,15 +96,10 @@ func ck(showMasked bool) {
 			break
 		}
 	}
-	if leaks > 0 {
-		fmt.Printf("%s leaked %d times\n", masked, leaks)
-	} else {
-		fmt.Printf("%s no known leaks\n", masked)
-	}
-
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
+
 	return
 }
 
